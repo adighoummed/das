@@ -1,12 +1,20 @@
 import os
 
-os.environ['DATABASE_URL'] = "sqlite:///../test.db"
+TEST_DB = "./test_api.db"
+
+os.environ['DATABASE_URL'] = "sqlite:///%s" % TEST_DB
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
 
+
+# @pytest.fixture(scope="session", autouse=True)
+# def setup_test_environment():
+#     # Clean up test database file after tests run
+#     if os.path.exists(TEST_DB):
+#         os.remove(TEST_DB)
 
 def get_auth_header():
     resp = client.post("/token", data={"username": "admin", "password": "admin"})
