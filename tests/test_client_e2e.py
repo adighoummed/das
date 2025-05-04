@@ -1,5 +1,5 @@
 import os
-os.environ['DATABASE_URL'] = "sqlite:///../test.db"
+os.environ['DATABASE_URL'] = "sqlite:///./test.db"
 import time
 import threading
 import requests
@@ -30,7 +30,7 @@ def test_client_end_to_end():
     assert health.get("status") == "OK"
     users = client.list_users()
     assert users == []
-    user_data = {"name": "E2E User", "address": "City", "phone": "0523333333", "national_id": "234567895"}
+    user_data = {"name": "ronaldinho", "address": "New York", "phone": "0523333333", "national_id": "123456782"}
     created = client.create_user(**user_data)
     assert created["name"] == user_data["name"]
     uid = created["id"]
