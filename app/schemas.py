@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator
 import re
 
 def validate_israeli_id(id_str: str) -> bool:
@@ -25,7 +25,7 @@ class UserBase(BaseModel):
     phone: str
     national_id: str
 
-    @validator('name')
+    @field_validator('name')
     def name_valid(cls, v):
         if not v or v.strip() == "":
             raise ValueError("Name is required")
@@ -33,7 +33,7 @@ class UserBase(BaseModel):
             raise ValueError("Name must contain only letters, spaces, or hyphens")
         return v.strip()
 
-    @validator('address')
+    @field_validator('address')
     def address_valid(cls, v):
         if not v or v.strip() == "":
             raise ValueError("Address is required")
@@ -41,14 +41,14 @@ class UserBase(BaseModel):
             raise ValueError("Address is too short")
         return v.strip()
 
-    @validator('phone')
+    @field_validator('phone')
     def phone_valid(cls, v):
         # accept optional + and 7-15 digits
         if not re.match(r'^\+?\d{7,15}$', v):
             raise ValueError("Invalid phone number format")
         return v
 
-    @validator('national_id')
+    @field_validator('national_id')
     def national_id_valid(cls, v):
         if not validate_israeli_id(v):
             raise ValueError("Invalid Israeli ID")

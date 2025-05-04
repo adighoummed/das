@@ -77,6 +77,6 @@ def test_input_validation(invalid_user):
     assert resp.status_code == 422
     detail = resp.json().get("detail")
     assert detail is not None
-    expected_errors = ["Invalid Israeli ID", "Invalid phone number format", "field required"]
+    expected_errors = ["Invalid Israeli ID", "Invalid phone number format", "Field required"]
     error_messages = " ".join(str(d.get("msg")) for d in detail)
     assert any(err in error_messages for err in expected_errors)
