@@ -1,14 +1,28 @@
 import os
-os.environ['DATABASE_URL'] = "sqlite:///./test.db"
+
+import pytest
+
+TEST_DB = "./test_client_e2e.db"
+
+os.environ['DATABASE_URL'] = "sqlite:///%s" % TEST_DB
 import time
 import threading
 import requests
 from app.main import app
 from app.client import APIClient
 
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    # Clean up test database file after tests run
+    if os.path.exists(TEST_DB):
+        os.remove(TEST_DB)
+
+
 def start_server():
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8001, log_level="error")
+
 
 def wait_for_server(url, timeout=5):
     start_time = time.time()
@@ -20,6 +34,7 @@ def wait_for_server(url, timeout=5):
         except Exception:
             time.sleep(0.2)
     return False
+
 
 def test_client_end_to_end():
     server_thread = threading.Thread(target=start_server, daemon=True)
