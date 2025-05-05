@@ -14,11 +14,13 @@ formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+
 # Create DB tables on startup
 @app.on_event("startup")
 def startup_event():
     models.Base.metadata.create_all(bind=models.engine)
     logger.info("Database tables created (if not exist)")
+
 
 # Middleware to log requests
 @app.middleware("http")
@@ -28,10 +30,12 @@ async def log_requests(request, call_next):
     logger.info(f"Completed {request.method} {request.url.path} with status {response.status_code}")
     return response
 
+
 # Health check endpoint (no auth needed)
 @app.get("/health")
 async def health():
     return {"status": "OK"}
+
 
 # Authentication endpoint for obtaining token
 @app.post("/token", response_model=schemas.Token)
@@ -44,8 +48,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     logger.warning("Failed login attempt for user '%s'", form_data.username)
     raise HTTPException(status_code=401, detail="Incorrect username or password")
 
+
 # Create user endpoint
-@app.post("/users", response_model=schemas.UserRead, status_code=201, dependencies=[Depends(auth.get_current_user_token)])
+@app.post("/users", response_model=schemas.UserRead, status_code=201,
+          dependencies=[Depends(auth.get_current_user_token)])
 def create_user(user: schemas.UserCreate, db=Depends(models.get_db)):
     # Create new user in DB
     new_user = models.User(name=user.name, address=user.address, phone=user.phone, national_id=user.national_id)
@@ -60,6 +66,7 @@ def create_user(user: schemas.UserCreate, db=Depends(models.get_db)):
     logger.info(f"User created with ID {new_user.id}")
     return new_user
 
+
 # Get specific user by ID
 @app.get("/users/{user_id}", response_model=schemas.UserRead, dependencies=[Depends(auth.get_current_user_token)])
 def get_user(user_id: int, db=Depends(models.get_db)):
@@ -70,6 +77,7 @@ def get_user(user_id: int, db=Depends(models.get_db)):
     logger.info(f"User id {user_id} retrieved")
     return user
 
+
 # List all users' IDs
 @app.get("/users", response_model=list[int], dependencies=[Depends(auth.get_current_user_token)])
 def list_users(db=Depends(models.get_db)):
@@ -77,3 +85,19 @@ def list_users(db=Depends(models.get_db)):
     ids = [user.id for user in users]
     logger.info(f"Listing all users IDs: {ids}")
     return ids
+
+
+# Delete all users
+@app.delete("/users", dependencies=[Depends(auth.get_current_user_token)])
+def delete_all_users(db=Depends(models.get_db)):
+    """
+    **Dangerous operation – removes every user row.**
+    Enabled by default because the assignment is a
+    simulator; in production you might hide it behind:
+    * an environment flag (settings.enable_maintenance),
+    * an admin role check,
+    * or simply remove it.
+    """
+    deleted = db.query(models.User).delete()
+    db.commit()
+    logger.warning("Deleted %s users via DELETE /users", deleted)

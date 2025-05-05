@@ -10,11 +10,19 @@ from app.main import app
 client = TestClient(app)
 
 
-# @pytest.fixture(scope="session", autouse=True)
-# def setup_test_environment():
-#     # Clean up test database file after tests run
-#     if os.path.exists(TEST_DB):
-#         os.remove(TEST_DB)
+@pytest.fixture(scope="session", autouse=True)
+def db_cleaner():
+    """
+    Ensures the DB is empty *after* the entire test session.
+    The yield happens instantly; the code after yield runs
+    when tests are complete.
+    """
+    yield  # --- run tests ---
+    # wipe users via API
+    headers = get_auth_header()
+    resp = client.delete("/users", headers=headers)
+    assert resp.status_code == 200
+
 
 def get_auth_header():
     resp = client.post("/token", data={"username": "admin", "password": "admin"})
@@ -80,3 +88,6 @@ def test_input_validation(invalid_user):
     expected_errors = ["Invalid Israeli ID", "Invalid phone number format", "Field required"]
     error_messages = " ".join(str(d.get("msg")) for d in detail)
     assert any(err in error_messages for err in expected_errors)
+
+
+

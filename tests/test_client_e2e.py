@@ -1,20 +1,19 @@
 import os
-
 import pytest
-
-TEST_DB = "./test_client_e2e.db"
-
-os.environ['DATABASE_URL'] = "sqlite:///%s" % TEST_DB
 import time
 import threading
 import requests
 from app.main import app
 from app.client import APIClient
 
+TEST_DB = "./test_client_e2e.db"
+os.environ['DATABASE_URL'] = "sqlite:///%s" % TEST_DB
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
     # Clean up test database file after tests run
+    yield
     if os.path.exists(TEST_DB):
         os.remove(TEST_DB)
 
